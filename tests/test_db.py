@@ -1,20 +1,26 @@
+from dataclasses import asdict
+
 from sqlalchemy import select
 
 from fast_zero.models import User
 
 
-def test_create_user(session):
+def test_create_user(session, mock_db_time):
 
-    new_user = User(username='test', email='test@teste', password='secret')
-    session.add(new_user)
-    session.commit()
+    with mock_db_time(
+        model=User,
+    ) as time:
+        new_user = User(username='test', email='test@teste', password='secret')
+        session.add(new_user)
+        session.commit()
 
-    # scalar: tudo que vier do db, vira objeto do python.
-    user = session.scalar(select(User).where(User.username == 'test'))
+        # scalar: tudo que vier do db, vira objeto do python.
+        user = session.scalar(select(User).where(User.username == 'test'))
 
-    assert user.username == {
+    assert asdict(user) == {
         'id': 1,
         'username': 'test',
-        'email':'test@test',
-        'password': 'secret'
+        'email': 'test@test',
+        'password': 'secret',
+        'created_at': time,
     }
